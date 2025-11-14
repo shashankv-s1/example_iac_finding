@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "example-unsafe-app.fullname" . }}
+  labels:
+    app: {{ include "example-unsafe-app.name" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "example-unsafe-app.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "example-unsafe-app.name" . }}
+    spec:
+      serviceAccountName: {{ include "example-unsafe-app.serviceAccountName" . }}
+      hostNetwork: true # hostNetwork enabled (risky)
+      containers:
+      - name: app
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: 80
+        # NO resource requests/limits -> scanner should flag
+        env:
+        - name: ADMIN_USER
+          value: "{{ .Values.admin.user }}"
+        - name: ADMIN_PASSWORD
+          value: "{{ .Values.admin.password }}" # hardcoded secret in manifest
+        securityContext:
+          privileged: {{ .Values.security.privileged }}
+          allowPrivilegeEscalation: {{ .Values.security.allowPrivilegeEscalation }}
+        volumeMounts:
+        - name: logs
+          mountPath: /var/log/app
+      volumes:
+      - name: logs
+        {{- if .Values.hostPathMount.enabled }}
+        hostPath:
+          path: {{ .Values.hostPathMount.path }}
+          type: DirectoryOrCreate
+        {{- else }}
+        emptyDir: {}
+        {{- end }}

@@ -1,0 +1,43 @@
+replicaCount: 2
+
+
+image:
+repository: nginx
+tag: latest # using :latest is a bad practice (scanner should flag)
+pullPolicy: Always
+
+
+service:
+type: LoadBalancer # will create a cloud LB (public by default)
+port: 80
+
+
+admin:
+user: admin
+password: superSecretPassword123 # hardcoded secret (bad)
+
+
+aws:
+accessKeyId: AKIAEXAMPLE123456 # intentionally hardcoded - bad
+secretAccessKey: verySecretValue
+s3BucketName: example-public-bucket
+
+
+persistence:
+enabled: true
+accessMode: ReadWriteOnce
+size: 10Gi
+
+
+hostPathMount:
+enabled: true
+path: /var/log # hostPath mount (dangerous)
+
+
+security:
+privileged: true # intentional: container runs privileged
+allowPrivilegeEscalation: true
+
+
+rbac:
+create: true

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: example-unsafe-app
+description: "Example Helm chart that intentionally contains insecure configurations to produce IaC findings"
+type: application
+version: 0.1.0
+appVersion: "1.0"
