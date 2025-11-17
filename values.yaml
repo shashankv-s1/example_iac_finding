@@ -14,7 +14,7 @@ port: 80
 
 admin:
 user: admin
-password: superSecretPassword123 # hardcoded secret (bad)
+password: superSecretPassword12 # hardcoded secret (bad)
 
 
 aws:
