@@ -1,0 +1,80 @@
+---
+# Source: example-unsafe-app/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: release-name-example-unsafe-app-config
+data:
+  app.conf: |
+    mode=production
+    admin_user=admin
+    admin_pass=superSecretPassword12 # sensitive data stored in ConfigMap (bad)
+---
+# Source: example-unsafe-app/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-example-unsafe-app
+  annotations:
+    # NOTE: No internal LB annotation -> will be public by default in many clouds
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: example-unsafe-app
+---
+# Source: example-unsafe-app/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: release-name-example-unsafe-app
+  labels:
+    app: example-unsafe-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: example-unsafe-app
+  template:
+    metadata:
+      labels:
+        app: example-unsafe-app
+    spec:
+      serviceAccountName: default
+      hostNetwork: true # hostNetwork enabled (risky)
+      containers:
+      - name: app
+        image: "nginx:latest"
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+        # NO resource requests/limits -> scanner should flag
+        env:
+        - name: ADMIN_USER
+          value: "admin"
+        - name: ADMIN_PASSWORD
+          value: "superSecretPassword12" # hardcoded secret in manifest
+        securityContext:
+          privileged: true
+          allowPrivilegeEscalation: true
+        volumeMounts:
+        - name: logs
+          mountPath: /var/log/app
+      volumes:
+      - name: logs
+        hostPath:
+          path: /var/log
+          type: DirectoryOrCreate
+---
+# Source: example-unsafe-app/templates/s3bucket-ack.yaml
+apiVersion: s3.services.k8s.aws/v1alpha1
+kind: Bucket
+metadata:
+  name: example-public-bucket
+spec:
+  name: example-public-bucket
+  acl: public-read # intentionally public-read (cloud-level misconfig)
+  website:
+    enabled: true
