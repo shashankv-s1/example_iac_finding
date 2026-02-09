@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: {{ include "example-unsafe-app.fullname" . }}
   annotations:
-    # NOTE: No internal LB annotation -> will be public by default in many clouds
+    # NOTE: No internal LB annotation -> will be public by default 
 spec:
   type: {{ .Values.service.type }}
   ports:
